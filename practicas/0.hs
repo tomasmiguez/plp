@@ -186,3 +186,23 @@ difPromedio xs = map (\x -> x - promedio xs) xs
 
 todosIguales :: [Int] -> Bool
 todosIguales = all =<< (==) . head
+
+-----------------------------------------------------------------------
+-- Ejercicio 5
+-----------------------------------------------------------------------
+data AB a = Nil | Bin (AB a) a (AB a) deriving Show
+
+-- a
+vacioAB :: AB a -> Bool
+vacioAB Nil = True
+vacioAB _ = False
+
+-- b
+negacionAB :: AB Bool -> AB Bool
+negacionAB Nil = Nil
+negacionAB (Bin l x r) = Bin (negacionAB l) (not x) (negacionAB r)
+
+-- c
+productoAB :: AB Int -> Int
+productoAB Nil = 1
+productoAB (Bin l x r) = (productoAB l) * x * (productoAB r)
