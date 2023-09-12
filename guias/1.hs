@@ -46,15 +46,15 @@ elem :: (Foldable t, Eq a) => a -> t a -> Bool
 -- elem e = foldr (\x r -> r || (e == x)) False
 elem e = foldr ((||) . (e ==)) False
 
-(++) :: [a] -> [a] -> [a]
+-- (++) :: [a] -> [a] -> [a]
 -- (++) xs ys = foldr (\x r -> (x:r)) ys xs
-(++) xs ys = foldr (:) ys xs
+-- (++) xs ys = foldr (:) ys xs
 
 filter :: (a -> Bool) -> [a] -> [a]
 filter f = foldr (\x r -> if f x then (x : r) else r) []
 
-map :: (a -> b) -> [a] -> [b]
-map f = foldr (\x r -> (f x : r)) []
+-- map :: (a -> b) -> [a] -> [b]
+-- map f = foldr (\x r -> (f x : r)) []
 
 -- II
 mejorSegun :: (a -> a -> Bool) -> [a] -> a
