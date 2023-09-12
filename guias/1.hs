@@ -116,3 +116,143 @@ insOrd e = recr (\x xs r -> if x >= e then e:x:xs else x:r) []
 
 -- d
 -- No, la llamada recursiva es sobre un numero, no sobre un elemento de una lista
+
+-- Ej 15
+mapPares :: (a -> b -> c) -> [(a, b)] -> [c]
+mapPares f = foldr (\(x1,x2) r -> (f x1 x2 : r)) []
+
+armarPares :: [a] -> [b] -> [(a, b)]
+-- armarPares [] = const []
+-- armarPares (x:xs) = \(y:ys) -> (x,y) : armarPares xs ys
+
+armarPares = foldr (\x r (y:ys) -> if null ys then [(x,y)] else (x,y) : r ys) (const [])
+
+mapDoble :: (a -> b -> c) -> [a] -> [b] -> [c]
+mapDoble f xs ys = mapPares f $ armarPares xs ys
+
+-- Ej 17
+generate :: ([a] -> Bool) -> ([a] -> a) -> [a]
+generate stop next = generateFrom stop next []
+
+generateFrom :: ([a] -> Bool) -> ([a] -> a) -> [a] -> [a]
+generateFrom stop next xs | stop xs = init xs
+                          | otherwise = generateFrom stop next (xs ++ [next xs])
+
+-- TODO CONSULTAR
+generateBase :: ([a] -> Bool) -> a -> (a -> a) -> [a]
+generateBase stop base next = generate stop (\xs -> if null xs then base else next $ last xs)
+
+factoriales :: Int -> [Int]
+factoriales n = generate (\l -> length l > n) (\xs -> if null xs then 1 else last xs * (length xs + 1))
+
+iterateN :: Int -> (a -> a) -> a -> [a]
+iterateN n f x = generateBase (\l -> length l > n) x f
+
+-- TODO CONSULTAR EL IV
+
+-- Ej 18
+
+-- TODO CONSULTAR
+foldNat :: a -> (a -> a) -> Integer -> a
+foldNat f g 0 = f
+foldNat f g n = g (foldNat f g (n-1))
+
+potencia :: Integer -> Integer -> Integer
+potencia base = foldNat 1 (*base)
+
+-- Ej 20
+type Conj a = (a -> Bool)
+
+vacio :: Conj a
+vacio = const False
+
+agregar :: Eq a => a -> Conj a -> Conj a
+agregar e c = \x -> (x == e) || c x
+
+interseccion :: Conj a -> Conj a -> Conj a
+interseccion c1 c2 = \x -> c1 x && c2 x
+
+union :: Conj a -> Conj a -> Conj a
+union c1 c2 = \x -> c1 x || c2 x
+
+inf :: Conj Int
+inf = \x -> even x
+
+singleton :: Eq a => a -> Conj a
+singleton a = (== a)
+
+-- No se puede definir map, ya que el dominio no es computable necesariamente.
+-- Por ej, sea C conjunto de naturales que son los numeros de programa q
+-- terminan, si map fuera computable entonces C tambien lo seria.
+
+-- Ej 22
+data AB a = Nil | Bin (AB a) a (AB a) deriving Show
+
+foldAB :: b -> (b -> a -> b -> b) -> AB a -> b
+foldAB leaf _ Nil = leaf
+foldAB leaf tree (Bin t1 v t2) = tree (foldAB leaf tree t1) v (foldAB leaf tree t2)
+
+-- TODO CONSULTAR
+recAB :: b -> (AB a -> AB a -> b -> a -> b -> b) -> AB a -> b
+recAB leaf _ Nil = leaf
+recAB leaf tree (Bin t1 v t2) = tree t1 t2 (recAB leaf tree t1) v (recAB leaf tree t2)
+
+esNil :: AB a -> Bool
+esNil a = case a of
+  Nil -> True
+  Bin {} -> False
+
+cantNodos :: AB a -> Int
+cantNodos = foldAB 1 (\r1 x r2 -> 1 + r1 + r2)
+
+-- TODO CONSULTAR
+mejorSegunAB :: (a -> a -> Bool) -> AB a -> a
+mejorSegunAB f = recAB undefined mejor
+  where
+    mejor lt rt l x r
+      | (esNil rt || f x r) && (esNil lt || f x l) = x
+      | esNil rt || f x r                          = l
+      | otherwise                                  = x
+
+-- TODO CONSULTAR
+esABB :: Ord a => AB a -> Bool
+esABB = recAB True invariante
+  where
+    maxAB = mejorSegunAB (>)
+    minAB = mejorSegunAB (<)
+    invariante lt rt l x r
+      | (esNil lt || maxAB lt <= x) && (esNil rt || x <= minAB rt) && l && r = True
+      | otherwise                                                            = False
+
+-- Ej 25
+data RoseTree a = Rose a [RoseTree a]
+
+exampleTree :: RoseTree Int
+exampleTree = Rose 1
+    [ Rose 2
+        [ Rose 5 []
+        , Rose 6 []
+        ]
+    , Rose 3
+        [ Rose 7
+            [ Rose 10 []
+            , Rose 11 []
+            ]
+        ]
+    , Rose 4
+        [ Rose 8 []
+        , Rose 9 []
+        ]
+    ]
+
+foldT :: (a -> [b] -> b) -> RoseTree a -> b
+foldT f (Rose a bs) = f a (map (foldT f) bs)
+
+hojas :: RoseTree a -> [a]
+hojas = foldT (\x rs -> if null rs then [x] else concat rs)
+
+distancias :: RoseTree a -> [Int]
+distancias = foldT (\x rs -> if null rs then [1] else map (+1) (concat rs))
+
+altura :: RoseTree a -> Int
+altura = foldT (\x rs -> if null rs then 1 else 1 + maximum rs)
